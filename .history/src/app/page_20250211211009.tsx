@@ -194,6 +194,8 @@ function PerformanceCard() {
 }
 
 export default function Dashboard() {
+  const theme = useTheme();
+  
   return (
     <DashboardLayout>
       <Box sx={{ py: 3 }}>

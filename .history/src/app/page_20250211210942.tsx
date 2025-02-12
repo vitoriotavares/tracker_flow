@@ -8,23 +8,18 @@ import {
   CircularProgress, 
   Card, 
   CardContent,
-  useTheme
+  ArrowForward
 } from '@mui/material';
-import { 
-  ArrowForward,
-  ChatBubbleOutline,
-  AttachMoney,
-  Inventory2Outlined,
-  ShowChartOutlined
-} from '@mui/icons-material';
 import DashboardLayout from '../components/DashboardLayout';
 import PriorityOverview from '../components/PriorityOverview';
 import PendingTasks from '../components/PendingTasks';
 import RecentActivity from '../components/RecentActivity';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 function MetricCard({ 
   title, 
   value, 
+  previousValue, 
   percentageChange, 
   isPositive,
   icon
@@ -207,7 +202,7 @@ export default function Dashboard() {
                 previousValue="21,500"
                 percentageChange={12}
                 isPositive={true}
-                icon={<ChatBubbleOutline sx={{ color: 'text.secondary' }} />}
+                icon={<ArrowUpward />}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -217,7 +212,7 @@ export default function Dashboard() {
                 previousValue="$14,200"
                 percentageChange={9}
                 isPositive={true}
-                icon={<AttachMoney sx={{ color: 'text.secondary' }} />}
+                icon={<ArrowUpward />}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -227,7 +222,7 @@ export default function Dashboard() {
                 previousValue="2,200"
                 percentageChange={7}
                 isPositive={true}
-                icon={<Inventory2Outlined sx={{ color: 'text.secondary' }} />}
+                icon={<ArrowUpward />}
               />
             </Grid>
             <Grid item xs={12} md={3}>
@@ -237,7 +232,7 @@ export default function Dashboard() {
                 previousValue="12.2%"
                 percentageChange={2}
                 isPositive={false}
-                icon={<ShowChartOutlined sx={{ color: 'text.secondary' }} />}
+                icon={<ArrowDownward />}
               />
             </Grid>
 
