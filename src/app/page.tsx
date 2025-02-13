@@ -7,8 +7,7 @@ import {
   Box, 
   CircularProgress, 
   Card, 
-  CardContent,
-  useTheme
+  CardContent
 } from '@mui/material';
 import { 
   ArrowForward,

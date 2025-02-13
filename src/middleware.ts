@@ -1,18 +1,57 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Rotas que não precisam de autenticação
 const publicRoutes = ['/login'];
 
-export function middleware(request: NextRequest) {
+interface CookieOptions {
+  name: string;
+  value: string;
+  maxAge?: number;
+  path?: string;
+  domain?: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  sameSite?: 'strict' | 'lax' | 'none';
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Verifica se é uma rota pública
   const isPublicRoute = publicRoutes.includes(pathname);
+
+  // Cria o cliente do Supabase para o middleware
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  );
   
   // Verifica se o usuário está autenticado
-  const authCookie = request.cookies.get('auth');
-  const isAuthenticated = !!authCookie;
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthenticated = !!session;
 
   // Se não estiver autenticado e tentar acessar uma rota protegida
   if (!isAuthenticated && !isPublicRoute) {

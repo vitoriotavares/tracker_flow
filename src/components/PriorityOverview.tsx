@@ -10,7 +10,20 @@ const data = [
 
 const total = data.reduce((sum, item) => sum + item.value, 0);
 
-const CustomLabel = ({ viewBox }: any) => {
+interface ViewBox {
+  cx: number;
+  cy: number;
+}
+
+interface LegendPayloadItem {
+  payload: {
+    name: string;
+    value: number;
+    color: string;
+  };
+}
+
+const CustomLabel = ({ viewBox }: { viewBox: ViewBox }) => {
   const { cx, cy } = viewBox;
   return (
     <>
@@ -24,9 +37,9 @@ const CustomLabel = ({ viewBox }: any) => {
   );
 };
 
-const CustomLegend = ({ payload }: any) => (
+const CustomLegend = ({ payload }: { payload: LegendPayloadItem[] }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 2 }}>
-    {payload.map((entry: any, index: number) => (
+    {payload.map((entry, index) => (
       <Box key={`legend-${index}`} sx={{ textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           {entry.payload.name}
@@ -65,7 +78,7 @@ export default function PriorityOverview() {
               {data.map((entry) => (
                 <Cell key={`cell-${entry.name}`} fill={entry.color} />
               ))}
-              <Label content={<CustomLabel />} position="center" />
+              <Label content={(props) => <CustomLabel viewBox={props.viewBox} />} position="center" />
             </Pie>
             <Tooltip 
               formatter={(value: number) => [`${value} (${Math.round(value/total * 100)}%)`, 'Conversas']}

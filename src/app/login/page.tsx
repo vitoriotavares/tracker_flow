@@ -11,15 +11,18 @@ import {
   InputAdornment,
   IconButton,
   Alert,
-  Stack
+  Stack,
+  CircularProgress
 } from '@mui/material';
 import { Visibility, VisibilityOff, Person, Lock } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthenticationError } from '@/lib/auth';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,10 +30,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
     try {
       await login(formData.email, formData.password);
-    } catch (error) {
-      setError('Email ou senha inválidos');
+    } catch (err) {
+      if (err instanceof AuthenticationError) {
+        setError(err.message);
+      } else {
+        setError('Ocorreu um erro inesperado. Tente novamente mais tarde.');
+        console.error('Erro de login:', err);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +102,18 @@ export default function LoginPage() {
           </Stack>
 
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert 
+              severity="error" 
+              sx={{ 
+                width: '100%', 
+                mb: 2, 
+                mt: 2,
+                '& .MuiAlert-message': {
+                  width: '100%',
+                  textAlign: 'center'
+                }
+              }}
+            >
               {error}
             </Alert>
           )}
@@ -104,12 +128,13 @@ export default function LoginPage() {
               name="email"
               autoComplete="email"
               autoFocus
+              disabled={isLoading}
               value={formData.email}
               onChange={handleChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Person sx={{ color: '#ff5722' }} />
+                    <Person />
                   </InputAdornment>
                 ),
               }}
@@ -123,19 +148,22 @@ export default function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
+              disabled={isLoading}
               value={formData.password}
               onChange={handleChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock sx={{ color: '#ff5722' }} />
+                    <Lock />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
+                      aria-label="toggle password visibility"
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
+                      disabled={isLoading}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -154,10 +182,15 @@ export default function LoginPage() {
                 '&:hover': {
                   bgcolor: '#f4511e',
                 },
-                height: '48px',
+                height: '48px'
               }}
+              disabled={isLoading}
             >
-              Entrar
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Entrar'
+              )}
             </Button>
           </Box>
         </Paper>

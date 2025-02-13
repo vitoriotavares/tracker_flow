@@ -2,62 +2,74 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { auth, type AuthUser } from '@/lib/auth';
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Verificar se há um usuário salvo no localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    // Verificar a sessão atual
+    const checkSession = async () => {
+      try {
+        const session = await auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Configurar listener para mudanças no estado de autenticação
+    const { data: { subscription } } = auth.onAuthStateChange((user) => {
+      setUser(user);
+      if (!user) {
+        router.push('/login');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   const login = async (email: string, password: string) => {
     try {
-      // TODO: Implementar chamada real à API de autenticação
-      const mockUser = {
-        id: '1',
-        email: email,
-        name: 'Usuário Teste',
-      };
-
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      // Adicionar um cookie para o middleware
-      document.cookie = 'auth=true; path=/';
+      const { user } = await auth.signIn(email, password);
+      setUser(user);
       router.push('/');
-      router.refresh(); // Força uma atualização da navegação
+      router.refresh();
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       throw error;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    // Remover o cookie de autenticação
-    document.cookie = 'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-    router.push('/login');
-    router.refresh(); // Força uma atualização da navegação
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      throw error;
+    }
   };
 
   return (
@@ -67,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user,
+        isLoading
       }}
     >
       {children}
